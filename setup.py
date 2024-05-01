@@ -1,8 +1,11 @@
 import os
 import re
+import sys
 
-from setuptools import setup
-
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 project_path = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(project_path, 'README.md'), 'r') as fout:
@@ -17,6 +20,24 @@ if os.path.exists(version_file):
         version = re.compile(r'.*__version__ = \'(.*?)\'', re.S).match(version_text).group(1)
 else:
     version = 'v1.0.0'
+
+if sys.argv[-1] == 'publish':
+    try:
+        import wheel
+        print("Wheel version: ", wheel.__version__)
+    except ImportError:
+        print('Wheel library missing. Please run "pip install wheel"')
+        sys.exit()
+    os.system('python setup.py sdist upload')
+    os.system('python setup.py bdist_wheel upload')
+    sys.exit()
+
+if sys.argv[-1] == 'tag':
+    print("Tagging the version on git:")
+    os.system("git tag -a %s -m 'version %s'" % (version, version))
+    os.system("git push --tags")
+    sys.exit()
+
 
 # allow setup.py to be run from any path
 os.chdir(project_path)
